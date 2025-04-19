@@ -1,10 +1,9 @@
-use clemen::layouts::{LayoutType, element::Element};
+use clemen::layouts::{LayoutType, element::Element, flexible::Direction};
 use std::time::SystemTime;
 
 fn main() {
     let mut root = Element::new((200.0, 100.0), (0.0, 0.0), LayoutType::Flexible);
     root.sublayout.offset = 0.0;
-    // root.sublayout.flex_wrap = true;
 
     let start = SystemTime::now();
     for _ in 0..2 {
@@ -12,7 +11,7 @@ fn main() {
             .add(Element::new((50.0, 100.0), (0.0, 0.0), LayoutType::Block));
     }
 
-    root.sublayout.resize_flexible();
+    root.sublayout.resize_flexible(Direction::X);
     // root.sublayout.revert_flexible();
 
     println!(

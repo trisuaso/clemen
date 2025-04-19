@@ -3,32 +3,55 @@ use super::{
     element::{Element, Vector2},
 };
 
+#[derive(PartialEq, Eq)]
+pub enum Direction {
+    X,
+    Y,
+}
+
 /// A flexible layout attempts to shrink elements within it on overflow.
 ///
 /// `amount to shrink each element = overflow amount / number of elements`
 impl Layout {
     /// Perform element resize calculations.
-    pub fn resize_flexible(&mut self) -> () {
+    pub fn resize_flexible(&mut self, resize_direction: Direction) -> () {
         if self.variant != LayoutType::Flexible {
             panic!("cannot run size calculations outside of a flexible layout");
         }
+
+        let boundary = if resize_direction == Direction::X {
+            self.size.0
+        } else {
+            self.size.1
+        };
 
         // shrink
         let mut overflowing_pixels: f64 = 0.0;
         let mut is_first_overflowing: bool = true;
 
         for element in self.inner.iter() {
-            if element.position.0 + element.size.0 + self.offset > self.size.0 {
+            let size_value = if resize_direction == Direction::X {
+                element.size.0
+            } else {
+                element.size.1
+            };
+
+            let position_value = if resize_direction == Direction::X {
+                element.position.0
+            } else {
+                element.position.1
+            };
+
+            if position_value + size_value + self.offset > boundary {
                 if is_first_overflowing {
                     // the first element to overflow is slightly more complicated
                     // because some of it is likely not overflowing... this means
                     // we need to calculate how much is ACTUALLY outside
-                    overflowing_pixels +=
-                        (self.size.0 - (element.size.0 + element.position.0)).abs();
+                    overflowing_pixels += (boundary - (size_value + position_value)).abs();
                     is_first_overflowing = false;
                 } else {
                     // everything else is guaranteed to be 100% outside of the box
-                    overflowing_pixels += element.size.0 + self.offset;
+                    overflowing_pixels += size_value + self.offset;
                 }
             }
         }
@@ -37,12 +60,31 @@ impl Layout {
 
         for (i, element) in self.inner.iter_mut().enumerate() {
             let mut new_size = element.size.clone();
-            new_size.0 -= amount_to_shrink_all_elements;
+
+            if resize_direction == Direction::X {
+                new_size.0 -= amount_to_shrink_all_elements;
+            } else {
+                new_size.1 -= amount_to_shrink_all_elements;
+            };
+
             element.resize(new_size);
 
-            if element.position.0 != 0.0 {
+            let position_value = if resize_direction == Direction::X {
+                element.position.0
+            } else {
+                element.position.1
+            };
+
+            if position_value != 0.0 {
                 let mut new_pos = element.position.clone();
-                new_pos.0 -= amount_to_shrink_all_elements * if i > 1 { i as f64 } else { 1.0 };
+                let x = amount_to_shrink_all_elements * if i > 1 { i as f64 } else { 1.0 };
+
+                if resize_direction == Direction::X {
+                    new_pos.0 -= x;
+                } else {
+                    new_pos.1 -= x;
+                };
+
                 element.goto(new_pos);
             }
         }
@@ -56,20 +98,39 @@ impl Layout {
             let mut extra_pixels: f64 = 0.0;
 
             for element in self.inner.iter() {
-                extra_pixels += element.size.0;
+                let size_value = if resize_direction == Direction::X {
+                    element.size.0
+                } else {
+                    element.size.1
+                };
+
+                extra_pixels += size_value;
             }
 
-            extra_pixels = self.size.0 - extra_pixels;
+            extra_pixels = boundary - extra_pixels;
             let amount_to_grow_all_elements = extra_pixels / self.inner.len() as f64;
 
             for (i, element) in self.inner.iter_mut().enumerate() {
                 let mut new_size = element.size.clone();
-                new_size.0 += amount_to_grow_all_elements;
+
+                if resize_direction == Direction::X {
+                    new_size.0 += amount_to_grow_all_elements;
+                } else {
+                    new_size.1 += amount_to_grow_all_elements;
+                };
+
                 element.resize(new_size);
 
                 if element.position.0 != 0.0 {
                     let mut new_pos = element.position.clone();
-                    new_pos.0 += amount_to_grow_all_elements * if i > 1 { i as f64 } else { 1.0 };
+                    let x = amount_to_grow_all_elements * if i > 1 { i as f64 } else { 1.0 };
+
+                    if resize_direction == Direction::X {
+                        new_pos.0 += x;
+                    } else {
+                        new_pos.1 += x;
+                    };
+
                     element.goto(new_pos);
                 }
             }
@@ -112,7 +173,7 @@ impl Layout {
                 pre.position.1, // we're going to stay on the same y level (unless we overflow)
             );
 
-            if (new_pos.0 + element.size.0 + self.offset) > self.size.0 && self.flex_wrap {
+            if (new_pos.0 + element.size.0 + self.offset) > self.size.0 && self.col {
                 // do wrap
                 let first_of_row = if let Some(ref e) = previous_on_new_row {
                     // this means that this is not the first time we're going on a new row
@@ -122,6 +183,10 @@ impl Layout {
                 } else {
                     self.inner.get(0).unwrap()
                 };
+
+                if tallest_of_row == 0.0 {
+                    tallest_of_row = first_of_row.size.1;
+                }
 
                 // we're doing tallest height + first.position.1(y) so that we're
                 // under the first element AND under the tallest element

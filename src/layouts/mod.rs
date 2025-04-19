@@ -23,7 +23,8 @@ pub struct Layout {
     /// The size of the containing element.
     pub size: Vector2,
     /// If the flexible layout should wrap elements instead of shrinking.
-    pub flex_wrap: bool,
+    /// This essentially creates a column layout.
+    pub col: bool,
 }
 
 impl Layout {
@@ -34,7 +35,7 @@ impl Layout {
             variant: r#type,
             offset: 0.0,
             size,
-            flex_wrap: false,
+            col: false,
         }
     }
 

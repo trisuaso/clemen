@@ -39,6 +39,18 @@ impl Layout {
                     self.inner.get(0).unwrap()
                 };
 
+                if tallest_of_row == 0.0 {
+                    // this fixes an edge case where the second element
+                    // immediately needs a new row, but `tallest_of_row` isn't
+                    // set since the previous element didn't overflow, causing
+                    // the second element to render over the first
+                    //
+                    // since `tallest_of_row` hasn't been set yet (since it is 0),
+                    // we can assume that the first of the previous row is the tallest
+                    // as a fallback
+                    tallest_of_row = first_of_row.size.1;
+                }
+
                 // we're doing tallest height + first.position.1(y) so that we're
                 // under the first element AND under the tallest element
                 new_pos = (0.0, tallest_of_row + first_of_row.position.1 + self.offset);

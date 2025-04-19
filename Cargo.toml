@@ -4,15 +4,3 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-
-[[example]]
-name = "block"
-crate-type = ["bin"]
-
-[[example]]
-name = "flex"
-crate-type = ["bin"]
-
-[[example]]
-name = "flex_overflow"
-crate-type = ["bin"]
