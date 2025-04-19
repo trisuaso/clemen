@@ -1,6 +1,9 @@
+use crate::{unit, unitf};
+
 use super::{
     AlignmentX, Layout, LayoutType,
     element::{Element, PositionStyle, Vector2},
+    unit::SizeUnit,
 };
 
 #[derive(PartialEq, Eq)]
@@ -52,7 +55,7 @@ impl Layout {
                         element.position.1
                     };
 
-                    spacing_from_center.insert(i, center_pos_value - position_value);
+                    spacing_from_center.insert(i, unitf!(center_pos_value - position_value));
                 }
             }
 
@@ -72,16 +75,16 @@ impl Layout {
                 if len % 2 == 0 {
                     // even number of elements
                     if direction == Direction::X {
-                        center_new_pos.0 = center_value - size_value;
+                        center_new_pos.0 = (SizeUnit::from(center_value) - size_value).into();
                     } else {
-                        center_new_pos.1 = center_value - size_value;
+                        center_new_pos.1 = (SizeUnit::from(center_value) - size_value).into();
                     }
                 } else {
                     // odd number of elements
                     if direction == Direction::X {
-                        center_new_pos.0 = center_value - (size_value / 2.0);
+                        center_new_pos.0 = (center_value - (size_value / 2.0)).into();
                     } else {
-                        center_new_pos.1 = center_value - (size_value / 2.0);
+                        center_new_pos.1 = (center_value - (size_value / 2.0)).into();
                     }
                 }
 
@@ -94,9 +97,9 @@ impl Layout {
                     let mut new_pos = element.position.clone();
 
                     if direction == Direction::X {
-                        new_pos.0 = center_new_pos.0 + center_offset;
+                        new_pos.0 = center_new_pos.0 + unit!(center_offset.to_owned());
                     } else {
-                        new_pos.1 = center_new_pos.1 + center_offset;
+                        new_pos.1 = center_new_pos.1 + unit!(center_offset.to_owned());
                     }
 
                     element.goto(new_pos);
@@ -125,12 +128,12 @@ impl Layout {
                 element.position.1
             };
 
-            if position_value + size_value + self.properties.offset > boundary {
+            if position_value + size_value + self.properties.offset > boundary.into() {
                 if is_first_overflowing {
                     // the first element to overflow is slightly more complicated
                     // because some of it is likely not overflowing... this means
                     // we need to calculate how much is ACTUALLY outside
-                    overflowing_pixels += (boundary - (size_value + position_value)).abs();
+                    overflowing_pixels += unitf!((boundary - (size_value + position_value)).abs());
                     is_first_overflowing = false;
                 } else {
                     // everything else is guaranteed to be 100% outside of the box
@@ -195,7 +198,7 @@ impl Layout {
                     element.size.1
                 };
 
-                extra_pixels += size_value;
+                extra_pixels += <SizeUnit as Into<f64>>::into(size_value);
             }
 
             extra_pixels = boundary - extra_pixels;
@@ -269,11 +272,13 @@ impl Layout {
             };
 
             let mut new_pos: Vector2 = (
-                basis.0 + pre.position.0 + pre.size.0 + self.properties.offset,
-                basis.1 + pre.position.1, // we're going to stay on the same y level (unless we overflow)
+                basis.0 + pre.position.0 + pre.size.0 + unit!(self.properties.offset),
+                (basis.1 + pre.position.1).into(), // we're going to stay on the same y level (unless we overflow)
             );
 
-            if (new_pos.0 + element.size.0 + self.properties.offset) > self.size.0 && self.col {
+            if (new_pos.0 + element.size.0 + self.properties.offset) > self.size.0.into()
+                && self.col
+            {
                 // do wrap
                 let first_of_row = if let Some(ref e) = previous_on_new_row {
                     // this means that this is not the first time we're going on a new row
@@ -285,21 +290,22 @@ impl Layout {
                 };
 
                 if tallest_of_row == 0.0 {
-                    tallest_of_row = first_of_row.size.1;
+                    tallest_of_row = first_of_row.size.1.into();
                 }
 
                 // we're doing tallest height + first.position.1(y) so that we're
                 // under the first element AND under the tallest element
                 new_pos = (
-                    0.0,
-                    tallest_of_row + first_of_row.position.1 + self.properties.offset,
+                    0.0.into(),
+                    (tallest_of_row + unitf!(first_of_row.position.1) + self.properties.offset)
+                        .into(),
                 );
                 previous_on_new_row = Some(element.clone());
-                tallest_of_row = element.size.1; // this is the first element in the new row, so it is the tallest
+                tallest_of_row = element.size.1.into(); // this is the first element in the new row, so it is the tallest
             }
 
-            if element.size.1 > tallest_of_row {
-                tallest_of_row = element.size.1;
+            if unitf!(element.size.1) > tallest_of_row {
+                tallest_of_row = element.size.1.into();
             }
 
             element.real_position = new_pos.clone();

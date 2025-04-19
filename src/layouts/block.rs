@@ -1,3 +1,7 @@
+use crate::{unit, unitf};
+
+use super::unit::SizeUnit;
+
 use super::{
     Layout,
     element::{Element, PositionStyle, Vector2},
@@ -28,11 +32,11 @@ impl Layout {
             };
 
             let mut new_pos: Vector2 = (
-                pre.position.0 + pre.size.0 + self.properties.offset,
+                unit!(pre.position.0 + pre.size.0 + self.properties.offset),
                 pre.position.1, // we're going to stay on the same y level (unless we overflow)
             );
 
-            if (new_pos.0 + element.size.0 + self.properties.offset) > self.size.0 {
+            if (new_pos.0 + element.size.0 + self.properties.offset) > self.size.0.into() {
                 // we're overflowing... we need to move down to the next line
                 let first_of_row = if let Some(ref e) = previous_on_new_row {
                     // this means that this is not the first time we're going on a new row
@@ -52,21 +56,23 @@ impl Layout {
                     // since `tallest_of_row` hasn't been set yet (since it is 0),
                     // we can assume that the first of the previous row is the tallest
                     // as a fallback
-                    tallest_of_row = first_of_row.size.1;
+                    tallest_of_row = first_of_row.size.1.into();
                 }
 
                 // we're doing tallest height + first.position.1(y) so that we're
                 // under the first element AND under the tallest element
                 new_pos = (
-                    0.0,
-                    tallest_of_row + first_of_row.position.1 + self.properties.offset,
+                    0.0.into(),
+                    unit!(
+                        tallest_of_row + unitf!(first_of_row.position.1) + self.properties.offset
+                    ),
                 );
                 previous_on_new_row = Some(element.clone());
-                tallest_of_row = element.size.1; // this is the first element in the new row, so it is the tallest
+                tallest_of_row = element.size.1.into(); // this is the first element in the new row, so it is the tallest
             }
 
-            if element.size.1 > tallest_of_row {
-                tallest_of_row = element.size.1;
+            if element.size.1 > tallest_of_row.into() {
+                tallest_of_row = element.size.1.into();
             }
 
             element.goto(new_pos);

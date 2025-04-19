@@ -1,6 +1,7 @@
 pub mod block;
 pub mod element;
 pub mod flexible;
+pub mod unit;
 
 use element::{Element, Vector2};
 
@@ -92,7 +93,7 @@ impl Layout {
     /// Recalculate element sizes/positions using the correct calculator for the layout type.
     pub fn recalculate(&mut self) -> () {
         match self.variant {
-            LayoutType::Flexible => self.recalculate_as_flexible((0.0, 0.0)),
+            LayoutType::Flexible => self.recalculate_as_flexible((0.0.into(), 0.0.into())),
             LayoutType::Block => self.recalculate_as_block(),
         }
     }

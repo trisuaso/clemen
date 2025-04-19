@@ -1,7 +1,8 @@
+use super::unit::SizeUnit;
 use super::{Layout, LayoutType};
 
 /// A 2D vector.
-pub type Vector2 = (f64, f64);
+pub type Vector2 = (SizeUnit, SizeUnit);
 
 /// The way and element is positioned.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -34,7 +35,7 @@ pub struct ElementAttributes {
 impl Default for ElementAttributes {
     fn default() -> Self {
         Self {
-            min_size: Some((0.5, 0.5)),
+            min_size: Some((0.5.into(), 0.5.into())),
             max_size: None,
             style: PositionStyle::default(),
         }
