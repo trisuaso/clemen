@@ -3,6 +3,21 @@ use super::{Layout, LayoutType};
 /// A 2D vector.
 pub type Vector2 = (f64, f64);
 
+/// The way and element is positioned.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PositionStyle {
+    /// Relative to the other elements within its container.
+    Relative,
+    /// Not counted as a child of the element; position and size values are absolute.
+    Absolute,
+}
+
+impl Default for PositionStyle {
+    fn default() -> Self {
+        Self::Relative
+    }
+}
+
 /// Specific elements which change the behavior of an [`Element`] in layouts.
 #[derive(Clone, Debug)]
 pub struct ElementAttributes {
@@ -12,6 +27,8 @@ pub struct ElementAttributes {
     /// The maximum sizes of the element. The element's width or height cannot
     /// fall below these values
     pub max_size: Option<Vector2>,
+    /// The type of positioning the element follows.
+    pub style: PositionStyle,
 }
 
 impl Default for ElementAttributes {
@@ -19,6 +36,7 @@ impl Default for ElementAttributes {
         Self {
             min_size: Some((0.5, 0.5)),
             max_size: None,
+            style: PositionStyle::default(),
         }
     }
 }

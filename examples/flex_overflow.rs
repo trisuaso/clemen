@@ -1,9 +1,12 @@
-use clemen::layouts::{LayoutType, element::Element, flexible::Direction};
+use clemen::layouts::{LayoutProperties, LayoutType, element::Element, flexible::Direction};
 use std::time::SystemTime;
 
 fn main() {
     let mut root = Element::new((200.0, 100.0), (0.0, 0.0), LayoutType::Flexible);
-    root.sublayout.offset = 0.0;
+    root.sublayout.properties = LayoutProperties {
+        offset: 0.0,
+        ..Default::default()
+    };
 
     let start = SystemTime::now();
     for _ in 0..100 {

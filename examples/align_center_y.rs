@@ -1,18 +1,26 @@
-use clemen::layouts::{LayoutProperties, LayoutType, element::Element};
+use clemen::layouts::{
+    AlignmentX, LayoutProperties, LayoutType, element::Element, flexible::Direction,
+};
 use std::time::SystemTime;
 
 fn main() {
-    let mut root = Element::new((200.0, 100.0), (0.0, 0.0), LayoutType::Block);
+    let mut root = Element::new((100.0, 500.0), (0.0, 0.0), LayoutType::Flexible);
     root.sublayout.properties = LayoutProperties {
         offset: 0.0,
+        align_x: AlignmentX::Center,
+        flex_grow: false,
         ..Default::default()
     };
+    root.sublayout.col = true;
 
     let start = SystemTime::now();
-    for _ in 0..10 {
+    for _ in 0..2 {
         root.sublayout
             .add(Element::new((100.0, 100.0), (0.0, 0.0), LayoutType::Block));
     }
+
+    root.sublayout.resize_flexible(Direction::Y);
+    // root.sublayout.revert_flexible();
 
     println!(
         "finished calculating, took: {}μs",

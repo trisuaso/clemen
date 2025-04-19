@@ -1,6 +1,6 @@
 use super::{
     Layout,
-    element::{Element, Vector2},
+    element::{Element, PositionStyle, Vector2},
 };
 
 /// A block layout does **not** resize any element placed into it. The block layout
@@ -14,6 +14,10 @@ impl Layout {
         let mut cloned = self.inner.clone();
 
         for element in cloned.iter_mut() {
+            if element.attrs.style == PositionStyle::Absolute {
+                continue;
+            }
+
             let pre = match previous_element {
                 Some(ref e) => e,
                 None => {
@@ -24,11 +28,11 @@ impl Layout {
             };
 
             let mut new_pos: Vector2 = (
-                pre.position.0 + pre.size.0 + self.offset,
+                pre.position.0 + pre.size.0 + self.properties.offset,
                 pre.position.1, // we're going to stay on the same y level (unless we overflow)
             );
 
-            if (new_pos.0 + element.size.0 + self.offset) > self.size.0 {
+            if (new_pos.0 + element.size.0 + self.properties.offset) > self.size.0 {
                 // we're overflowing... we need to move down to the next line
                 let first_of_row = if let Some(ref e) = previous_on_new_row {
                     // this means that this is not the first time we're going on a new row
@@ -53,7 +57,10 @@ impl Layout {
 
                 // we're doing tallest height + first.position.1(y) so that we're
                 // under the first element AND under the tallest element
-                new_pos = (0.0, tallest_of_row + first_of_row.position.1 + self.offset);
+                new_pos = (
+                    0.0,
+                    tallest_of_row + first_of_row.position.1 + self.properties.offset,
+                );
                 previous_on_new_row = Some(element.clone());
                 tallest_of_row = element.size.1; // this is the first element in the new row, so it is the tallest
             }

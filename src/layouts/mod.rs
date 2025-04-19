@@ -12,19 +12,69 @@ pub enum LayoutType {
     Block,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AlignmentX {
+    Left,
+    Center,
+}
+
+impl Default for AlignmentX {
+    fn default() -> Self {
+        Self::Left
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AlignmentY {
+    Top,
+    Center,
+}
+
+impl Default for AlignmentY {
+    fn default() -> Self {
+        Self::Top
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct LayoutProperties {
+    /// The spacing between each element.
+    pub offset: f64,
+    /// The spacing between each element and the layout bounding box.
+    pub padding: f64,
+    /// The horizontal alignment of elements in flexible layouts.
+    pub align_x: AlignmentX,
+    /// The verticle alignment of elements in flexible layouts.
+    pub align_y: AlignmentY,
+    /// If elements in a flexible container automatically grow to fill the container.
+    pub flex_grow: bool,
+}
+
+impl Default for LayoutProperties {
+    fn default() -> Self {
+        Self {
+            offset: 0.0,
+            padding: 0.0,
+            align_x: AlignmentX::default(),
+            align_y: AlignmentY::default(),
+            flex_grow: true,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Layout {
     /// The elements contained within the layout.
     pub(crate) inner: Vec<Element>,
     /// The variant of layout this iss.
     pub variant: LayoutType,
-    /// The spacing between each element in the block layout.
-    pub offset: f64,
     /// The size of the containing element.
     pub size: Vector2,
     /// If the flexible layout should wrap elements instead of shrinking.
     /// This essentially creates a column layout.
     pub col: bool,
+    /// Layout configuration.
+    pub properties: LayoutProperties,
 }
 
 impl Layout {
@@ -33,16 +83,16 @@ impl Layout {
         Self {
             inner: Vec::new(),
             variant: r#type,
-            offset: 0.0,
             size,
             col: false,
+            properties: LayoutProperties::default(),
         }
     }
 
     /// Recalculate element sizes/positions using the correct calculator for the layout type.
     pub fn recalculate(&mut self) -> () {
         match self.variant {
-            LayoutType::Flexible => self.recalculate_as_flexible(),
+            LayoutType::Flexible => self.recalculate_as_flexible((0.0, 0.0)),
             LayoutType::Block => self.recalculate_as_block(),
         }
     }
